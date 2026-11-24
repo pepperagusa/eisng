@@ -4,7 +4,7 @@ import { ICONS, iconSVG } from "./shop.js";
 import { PRIZES, pickPrize, chestSVG } from "./chest.js";
 
 // While testing: unlimited rolls. Set to false when the project is done.
-const UNLIMITED = true;
+const UNLIMITED = false;
 const ROLLS_PER_DAY = 7;
 const STORE_KEY = "eisng:v1";
 const SPIN_MS = 900;

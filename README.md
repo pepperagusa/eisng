@@ -69,7 +69,7 @@ Once a day you can open a chest for bonus points (`chest.js`). Chest points can 
 
 ## Test mode
 
-`UNLIMITED = true` at the top of `app.js` removes the 7-per-day limit and lets the chest be reopened, for testing. Set it to `false` for launch.
+Test mode is off: players get 7 rolls and 1 chest a day. Setting `UNLIMITED = true` at the top of `app.js` removes both limits for testing.
 
 Rolls and history are saved in the browser (localStorage). The daily limit resets at local midnight.
 
