@@ -302,3 +302,145 @@ footer { margin-top: 40px; text-align: center; color: var(--muted); font-size: .
 .ach-row.locked { border-left-color: var(--line); }
 .ach-row.locked .ach-name, .ach-row.locked .ach-pts { color: var(--muted); }
 .ach-row.locked .ach-name::before { content: "🔒 "; font-size: .8em; }
+
+/* Header settings button */
+header { position: relative; }
+.icon-btn {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.icon-btn:hover { background: var(--panel-2); }
+.icon-btn:focus-visible, .tabs button:focus-visible, .link-btn:focus-visible,
+.stats button:focus-visible, .danger-btn:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+#open-settings { position: absolute; top: 0; right: 0; }
+header h1 { padding: 0 48px; }
+
+/* Card extras */
+.won-summary { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+.won-summary:empty { display: none; }
+.spinning .won-summary, .spinning .link-btn { visibility: hidden; }
+.ach.new { border-color: var(--impossible); }
+.ach.new .ach-name::before, .new-tag {
+  content: "NEW";
+  font-size: .62rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #0e0f14;
+  background: var(--impossible);
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--cool);
+  font: inherit;
+  font-size: .85rem;
+  cursor: pointer;
+  margin-top: 10px;
+  padding: 4px 8px;
+}
+.link-btn[hidden] { display: none; }
+
+/* Achievements stat doubles as a button */
+.stats button {
+  background: var(--panel);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  display: grid;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.stats button:hover { border-color: var(--line); }
+.stats button .stat-label { color: var(--cool); }
+
+/* Settings dialog */
+.settings {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+.settings[open] { display: flex; flex-direction: column; }
+.settings::backdrop { background: rgb(0 0 0 / .6); }
+.settings-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 6px;
+}
+.settings-head h2 { margin: 0; font-size: 1.2rem; text-transform: none; letter-spacing: 0; color: var(--text); }
+.tabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 1px solid var(--line); }
+.tabs button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 10px;
+  cursor: pointer;
+}
+.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--text); }
+.tab-body { padding: 8px 16px 24px; overflow-y: auto; }
+.tab-body h3 { font-size: 1rem; margin: 18px 0 6px; }
+.how p, .how li { color: #c9ccda; }
+.how ol { padding-left: 20px; }
+.tname { color: var(--c); font-weight: 700; }
+.examples { list-style: none; padding: 0; display: grid; gap: 4px; font-variant-numeric: tabular-nums; }
+.examples .tname { display: inline-block; min-width: 90px; }
+
+.ach-summary { margin: 12px 0 6px; font-weight: 600; }
+.bar { height: 6px; background: var(--panel-2); border-radius: 999px; overflow: hidden; }
+.bar > div { height: 100%; background: linear-gradient(90deg, var(--uncommon), var(--cool), var(--insane)); }
+.filters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin: 14px 0 4px; }
+.filters input { grid-column: 1 / -1; }
+.filters input, .filters select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: .9rem;
+  min-width: 0;
+}
+.ach-list .ach-desc { overflow-wrap: anywhere; }
+#ach-more { display: block; margin: 10px auto 0; }
+
+.danger-btn {
+  background: none;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.danger-btn:hover { background: #2a1010; }
+
+.tabs button { white-space: nowrap; }
+@media (max-width: 480px) {
+  .tabs { gap: 0; padding: 0 8px; }
+  .tabs button { padding: 10px 8px; font-size: .92rem; }
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters #ach-group { grid-column: 1 / -1; }
+}

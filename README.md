@@ -16,9 +16,26 @@ The odds are exact: they come from classifying all 1,000,000 possible numbers.
 
 ## Achievements and points
 
-Each roll also earns achievements (70 in total), like **Double Duplicates (1 & 4)**, **Even Steven**, **Prime Time** or **Calendar Day (12/14/74)**. A roll's points are the sum of its achievements.
+Each roll earns achievements: 2,001 in total, in 13 families.
+
+| Family | Example | Count |
+|---|---|---|
+| Classics | Double Duplicates (1 & 4), Calendar Day, Palindrome | 70 |
+| Hidden codes | Has 583 in it | 995 |
+| Hidden pairs | Has 58 in it | 99 |
+| Years | Has 1999 in it | 200 |
+| Starts with / Ends with | Starts with 42, ends with 7 | 207 |
+| Bookends | Starts and ends with 5 | 9 |
+| Divisible by | A multiple of 23 | 93 |
+| Neighborhoods | Between 340,000 and 349,999 | 110 |
+| Digit sums | Digits add up to 27 | 61 |
+| Digit counts | Exactly three 5s, no 8s | 78 |
+| Runs | Four 4s in a row | 49 |
+| Math collectibles | Twin prime, Armstrong number, Taxicab 1729 | 30 |
 
 Points come from how many of the 1,000,000 numbers earn the achievement: `10 × √(1,000,000 / count)`, rounded. So a 1-in-2 achievement is worth 15 points, a 1-in-1,000 one about 325, and a one-of-a-kind number 10,000.
+
+The ⚙️ button opens Settings: how to play, an achievement browser (search, filter by family or locked/unlocked, sort), and a reset button.
 
 ## Test mode
 
@@ -38,10 +55,16 @@ Then open http://localhost:8000.
 
 ## Change the rules
 
-The category rules live in `classify.js` and the achievements in `achievements.js`. After changing them, run:
+The category rules live in `classify.js` and the achievements in `achievements.js`. After changing achievements, regenerate their counts:
+
+```bash
+npm run counts
+```
+
+Then run the tests:
 
 ```bash
 npm test
 ```
 
-The test recounts every number and fails if the counts in `TIERS` or `COUNTS` are out of date or the categories stop getting rarer in order. The failure message prints the new counts to paste in.
+The test recounts every number (takes about 30 seconds) and fails if `counts.js` or the counts in `TIERS` are out of date, if any achievement can't be earned, or if the categories stop getting rarer in order.

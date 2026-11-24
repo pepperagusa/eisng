@@ -11,6 +11,9 @@
   <div id="test-banner" class="test-banner" hidden>Test mode: unlimited rolls</div>
   <main>
     <header>
+      <button id="open-settings" class="icon-btn" type="button" aria-label="Settings, how to play and achievements" title="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
+      </button>
       <h1>Randomize</h1>
       <p class="sub">Seven numbers a day from 1 to 1,000,000. How unique will yours be?</p>
     </header>
@@ -22,7 +25,9 @@
         <div id="reason" class="reason">Press the button to roll your first number.</div>
         <div id="odds" class="odds"></div>
         <div id="points" class="points"></div>
+        <div id="won-summary" class="won-summary"></div>
         <ul id="won" class="won"></ul>
+        <button id="won-more" class="link-btn" type="button" hidden></button>
       </div>
 
       <button id="roll" class="roll" type="button">Randomize</button>
@@ -31,7 +36,7 @@
 
     <section class="stats">
       <div><span id="stat-total" class="stat-num">0</span><span class="stat-label">Total points</span></div>
-      <div><span id="stat-rolls" class="stat-num">0</span><span class="stat-label">Rolls</span></div>
+      <button id="open-achievements" type="button" title="Browse achievements"><span id="stat-ach" class="stat-num">0</span><span class="stat-label">Achievements ›</span></button>
       <div><span id="stat-best" class="stat-num">—</span><span class="stat-label">Best roll</span></div>
     </section>
 
@@ -47,17 +52,79 @@
     </section>
 
     <section>
-      <h2 id="ach-title">Achievements</h2>
-      <ul id="ach-list" class="ach-list"></ul>
-    </section>
-
-    <section>
       <h2>History</h2>
       <div id="history" class="history"></div>
     </section>
 
     <footer>Your rolls are saved in this browser only.</footer>
   </main>
+
+  <dialog id="settings" class="settings" aria-labelledby="settings-title">
+    <div class="settings-head">
+      <h2 id="settings-title">Settings</h2>
+      <button id="close-settings" class="icon-btn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="how">How to play</button>
+      <button type="button" role="tab" data-tab="achievements">Achievements</button>
+      <button type="button" role="tab" data-tab="options">Options</button>
+    </div>
+
+    <div id="tab-how" class="tab-body how" role="tabpanel">
+      <h3>The basics</h3>
+      <ol>
+        <li>Press <strong>Randomize</strong> to roll a number from 1 to 1,000,000.</li>
+        <li>You get <strong>7 rolls a day</strong>. They reset at midnight.</li>
+        <li>Every roll gets a <strong>category</strong> and earns <strong>achievements</strong>. Achievements give you points.</li>
+      </ol>
+
+      <h3>Categories</h3>
+      <p>The category shows how special the number's pattern is, from <span class="t-common tname">Common</span> up to <span class="t-impossible tname">Impossible</span>. Repeating digits, sequences, palindromes and round numbers rank higher. The <strong>Categories</strong> list on the main page shows the odds of each one.</p>
+      <ul class="examples">
+        <li><span class="t-common tname">Common</span> 982,145</li>
+        <li><span class="t-cool tname">Cool</span> 482,347 (has 234)</li>
+        <li><span class="t-rare tname">Rare</span> 112,232 (two pairs)</li>
+        <li><span class="t-insane tname">Insane</span> 123,321 (palindrome)</li>
+        <li><span class="t-extreme tname">Extreme</span> 500,000</li>
+        <li><span class="t-impossible tname">Impossible</span> 777,777</li>
+      </ul>
+
+      <h3>Achievements & points</h3>
+      <p>There are over 2,000 achievements, for things like hidden codes (<em>has 583 in it</em>), years (<em>has 1999 in it</em>), digit sums, divisibility, primes, palindromes, dates and times. One roll can earn dozens at once. Bigger patterns also earn the smaller ones inside them.</p>
+      <p>The rarer an achievement, the more points it's worth. Something half of all numbers have is worth 15 points. Something only one number has is worth 10,000.</p>
+      <p>Achievements you earn for the first time are marked <span class="new-tag">NEW</span>. Collect them all in the <strong>Achievements</strong> tab.</p>
+    </div>
+
+    <div id="tab-achievements" class="tab-body" role="tabpanel" hidden>
+      <p id="ach-summary" class="ach-summary"></p>
+      <div class="bar"><div id="ach-bar"></div></div>
+      <div class="filters">
+        <input id="ach-search" type="search" placeholder="Search achievements" aria-label="Search achievements">
+        <select id="ach-group" aria-label="Family"><option value="">All families</option></select>
+        <select id="ach-status" aria-label="Status">
+          <option value="all">All</option>
+          <option value="unlocked">Unlocked</option>
+          <option value="locked">Locked</option>
+        </select>
+        <select id="ach-sort" aria-label="Sort">
+          <option value="easy">Easiest first</option>
+          <option value="hard">Hardest first</option>
+          <option value="name">A–Z</option>
+        </select>
+      </div>
+      <p id="ach-count" class="more"></p>
+      <ul id="ach-list" class="ach-list"></ul>
+      <button id="ach-more" class="link-btn" type="button">Show more</button>
+    </div>
+
+    <div id="tab-options" class="tab-body" role="tabpanel" hidden>
+      <h3>Rolls</h3>
+      <p id="mode-note"></p>
+      <h3>Your data</h3>
+      <p>Your rolls, points and achievements are saved in this browser only.</p>
+      <button id="reset" class="danger-btn" type="button">Reset all progress</button>
+    </div>
+  </dialog>
   <script type="module" src="app.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import { classify, TIERS, MIN, MAX } from "./classify.js";
-import { ACHIEVEMENTS, achievementsFor, score } from "./achievements.js";
+import { ACHIEVEMENTS, GROUPS, achievementsFor, score } from "./achievements.js";
 
 // While testing: unlimited rolls. Set to false when the project is done.
 const UNLIMITED = true;
@@ -10,7 +10,10 @@ const SPIN_MS = 900;
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => n.toLocaleString("en-US");
 const total = MAX - MIN + 1;
-const oneIn = (count) => `1 in ${fmt(Math.round(total / count))}`;
+const oneIn = (count) => {
+  const x = total / count;
+  return `1 in ${x < 10 ? +x.toFixed(1) : fmt(Math.round(x))}`;
+};
 
 // ---- storage: { days: { "YYYY-MM-DD": [{ n, t, r, at }] } } ----
 function load() {
@@ -44,12 +47,25 @@ const sumPoints = (rolls) => rolls.reduce((t, r) => t + pointsOf(r.n), 0);
 let state = load();
 let spinning = false;
 
+// How many times each achievement has been earned: Map(id → times)
+let earned = new Map();
+function rebuildEarned() {
+  earned = new Map();
+  for (const r of Object.values(state.days).flat()) addEarned(r.n);
+}
+function addEarned(n) {
+  for (const { a } of achievementsFor(n)) earned.set(a.id, (earned.get(a.id) || 0) + 1);
+}
+rebuildEarned();
+
 function rollsToday() {
   return state.days[todayKey()] || [];
 }
 
 // ---- rendering ----
-function showResult(roll, animate) {
+const CHIPS_SHOWN = 10;
+
+function showResult(roll, animate, fresh = new Set()) {
   const card = $("card");
   const tier = TIERS[roll.t];
   card.className = `card t-${tier.id} tier-${tier.id}`;
@@ -57,19 +73,28 @@ function showResult(roll, animate) {
   $("number").textContent = fmt(roll.n);
   $("reason").textContent = roll.r;
   $("odds").textContent = `${tier.name} numbers: ${oneIn(tier.count)}`;
-  const won = achievementsFor(roll.n);
+  // New unlocks first, then the most points.
+  const won = [...achievementsFor(roll.n)].sort((x, y) =>
+    fresh.has(y.a.id) - fresh.has(x.a.id) || y.a.points - x.a.points);
+  const newCount = won.filter((w) => fresh.has(w.a.id)).length;
   $("points").textContent = `+${fmt(score(won))} points`;
+  $("won-summary").textContent = `${won.length} achievement${won.length === 1 ? "" : "s"}` +
+    (newCount ? ` · ${newCount} new!` : "");
   const box = $("won");
   box.innerHTML = "";
-  for (const { a, detail } of won) {
+  won.forEach(({ a, detail }, i) => {
     const li = document.createElement("li");
-    li.className = "ach " + band(a.points);
+    li.className = "ach " + band(a.points) + (fresh.has(a.id) ? " new" : "");
+    li.hidden = i >= CHIPS_SHOWN;
     li.title = `${a.desc} · ${oneIn(a.count)}`;
     li.innerHTML = `<span class="ach-name"></span><span class="ach-pts"></span>`;
     li.firstChild.textContent = a.name + (detail ? ` (${detail})` : "");
     li.lastChild.textContent = `+${fmt(a.points)}`;
     box.append(li);
-  }
+  });
+  const more = $("won-more");
+  more.hidden = won.length <= CHIPS_SHOWN;
+  more.textContent = `Show all ${won.length}`;
   if (animate) {
     card.classList.remove("reveal");
     void card.offsetWidth;
@@ -154,30 +179,60 @@ function renderStats() {
     if (p > bestPts) { best = r; bestPts = p; }
   }
   $("stat-total").textContent = fmt(sumPoints(all));
-  $("stat-rolls").textContent = fmt(all.length);
+  $("stat-ach").textContent = `${fmt(earned.size)} / ${fmt(ACHIEVEMENTS.length)}`;
   $("stat-best").textContent = best ? `${fmt(best.n)} · ${fmt(bestPts)}` : "—";
 }
 
+// ---- settings panel: achievement browser ----
+const PAGE = 100;
+let achShown = PAGE;
+
+function filteredAchievements() {
+  const q = $("ach-search").value.trim().toLowerCase();
+  const group = $("ach-group").value;
+  const status = $("ach-status").value;
+  const sort = $("ach-sort").value;
+  const list = ACHIEVEMENTS.filter((a) =>
+    (!group || a.group === group) &&
+    (status === "all" || (status === "unlocked") === earned.has(a.id)) &&
+    (!q || a.name.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)));
+  const by = {
+    easy: (x, y) => x.points - y.points || y.count - x.count,
+    hard: (x, y) => y.points - x.points || x.count - y.count,
+    name: (x, y) => x.name.localeCompare(y.name, undefined, { numeric: true }),
+  }[sort];
+  return list.sort(by);
+}
+
 function renderAchievements() {
-  const earned = {};
-  for (const r of Object.values(state.days).flat())
-    for (const { a } of achievementsFor(r.n)) earned[a.id] = (earned[a.id] || 0) + 1;
-  const got = ACHIEVEMENTS.filter((a) => earned[a.id]).length;
-  $("ach-title").textContent = `Achievements · ${got} of ${ACHIEVEMENTS.length} unlocked`;
+  const pts = [...earned.keys()].reduce((t, id) => t + byId.get(id).points, 0);
+  $("ach-summary").textContent =
+    `${fmt(earned.size)} of ${fmt(ACHIEVEMENTS.length)} unlocked · ${fmt(pts)} of ${fmt(maxPoints)} achievement points`;
+  $("ach-bar").style.width = `${(earned.size / ACHIEVEMENTS.length) * 100}%`;
+
+  const list = filteredAchievements();
   const box = $("ach-list");
   box.innerHTML = "";
-  for (const a of [...ACHIEVEMENTS].sort((x, y) => x.points - y.points || y.count - x.count)) {
+  for (const a of list.slice(0, achShown)) {
+    const times = earned.get(a.id);
     const li = document.createElement("li");
-    li.className = `ach-row ${band(a.points)}${earned[a.id] ? "" : " locked"}`;
+    li.className = `ach-row ${band(a.points)}${times ? "" : " locked"}`;
     li.innerHTML = `<div class="ach-main"><span class="ach-name"></span><span class="ach-desc"></span></div>
       <div class="ach-side"><span class="ach-pts"></span><span class="ach-meta"></span></div>`;
     li.querySelector(".ach-name").textContent = a.name;
-    li.querySelector(".ach-desc").textContent = a.desc;
+    li.querySelector(".ach-desc").textContent = `${a.desc} · ${a.group}`;
     li.querySelector(".ach-pts").textContent = `${fmt(a.points)} pts`;
-    li.querySelector(".ach-meta").textContent = earned[a.id] ? `×${earned[a.id]} · ${oneIn(a.count)}` : oneIn(a.count);
+    li.querySelector(".ach-meta").textContent = times ? `×${fmt(times)} · ${oneIn(a.count)}` : oneIn(a.count);
     box.append(li);
   }
+  $("ach-count").textContent = list.length
+    ? `Showing ${fmt(Math.min(achShown, list.length))} of ${fmt(list.length)}`
+    : "No achievements match.";
+  $("ach-more").hidden = achShown >= list.length;
 }
+
+const byId = new Map(ACHIEVEMENTS.map((a) => [a.id, a]));
+const maxPoints = ACHIEVEMENTS.reduce((t, a) => t + a.points, 0);
 
 function renderHistory() {
   const today = todayKey();
@@ -215,8 +270,8 @@ function renderAll() {
   renderToday();
   renderLegend();
   renderStats();
-  renderAchievements();
   renderHistory();
+  if ($("settings").open) renderAchievements();
 }
 
 // ---- rolling ----
@@ -228,9 +283,13 @@ function roll() {
   const { tier, reason } = classify(n);
   const result = { n, t: tier, r: reason, at: Date.now() };
 
+  // Achievements this roll unlocks for the first time.
+  const fresh = new Set(achievementsFor(n).map((w) => w.a.id).filter((id) => !earned.has(id)));
+
   // Save before the animation so a refresh can't re-roll.
   (state.days[day] ||= []).push(result);
   save();
+  addEarned(n);
 
   spinning = true;
   renderControls();
@@ -246,7 +305,7 @@ function roll() {
       return;
     }
     spinning = false;
-    showResult(result, true);
+    showResult(result, true, fresh);
     renderAll();
   };
   requestAnimationFrame(tick);
@@ -260,6 +319,7 @@ let shownDay = todayKey();
 function refresh() {
   if (spinning) return;
   state = load();
+  rebuildEarned();
   if (todayKey() !== shownDay) {
     shownDay = todayKey();
     $("card").className = "card tier-none";
@@ -269,12 +329,67 @@ function refresh() {
     $("odds").textContent = "";
     $("points").textContent = "";
     $("won").innerHTML = "";
+    $("won-summary").textContent = "";
+    $("won-more").hidden = true;
   }
   renderAll();
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
 addEventListener("storage", (e) => { if (e.key === STORE_KEY) refresh(); });
 setInterval(() => { if (todayKey() !== shownDay) refresh(); }, 30_000);
+
+$("won-more").addEventListener("click", () => {
+  for (const li of $("won").children) li.hidden = false;
+  $("won-more").hidden = true;
+});
+
+// ---- settings panel ----
+function openSettings(tab = "how") {
+  showTab(tab);
+  if (!$("settings").open) $("settings").showModal();
+}
+function showTab(tab) {
+  for (const btn of document.querySelectorAll("[data-tab]")) {
+    const on = btn.dataset.tab === tab;
+    btn.setAttribute("aria-selected", on);
+    $(`tab-${btn.dataset.tab}`).hidden = !on;
+  }
+  if (tab === "achievements") { achShown = PAGE; renderAchievements(); }
+}
+$("open-settings").addEventListener("click", () => openSettings("how"));
+$("open-achievements").addEventListener("click", () => openSettings("achievements"));
+$("close-settings").addEventListener("click", () => $("settings").close());
+$("settings").addEventListener("click", (e) => { if (e.target === $("settings")) $("settings").close(); });
+for (const btn of document.querySelectorAll("[data-tab]"))
+  btn.addEventListener("click", () => showTab(btn.dataset.tab));
+
+for (const g of GROUPS) $("ach-group").add(new Option(g, g));
+for (const id of ["ach-group", "ach-status", "ach-sort"])
+  $(id).addEventListener("change", () => { achShown = PAGE; renderAchievements(); });
+let searchTimer;
+$("ach-search").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { achShown = PAGE; renderAchievements(); }, 150);
+});
+$("ach-more").addEventListener("click", () => { achShown += PAGE; renderAchievements(); });
+
+$("mode-note").textContent = UNLIMITED
+  ? "Test mode is on: unlimited rolls."
+  : `You get ${ROLLS_PER_DAY} rolls a day. They reset at midnight.`;
+$("reset").addEventListener("click", () => {
+  if (!confirm("Delete all your rolls, points and achievements? This can't be undone.")) return;
+  state = { days: {} };
+  save();
+  rebuildEarned();
+  $("card").className = "card tier-none";
+  $("badge").textContent = "Ready";
+  $("number").textContent = "——";
+  $("reason").textContent = "Progress reset. Press the button to roll.";
+  for (const id of ["odds", "points", "won-summary"]) $(id).textContent = "";
+  $("won").innerHTML = "";
+  $("won-more").hidden = true;
+  renderAll();
+});
 
 // Initial view: show today's latest roll if there is one.
 const last = rollsToday().at(-1);
