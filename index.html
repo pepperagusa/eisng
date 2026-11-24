@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Randomize</title>
+  <meta name="description" content="Seven random numbers a day. How unique will yours be?">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Randomize</h1>
+      <p class="sub">Seven numbers a day from 1 to 1,000,000. How unique will yours be?</p>
+    </header>
+
+    <section class="stage" aria-live="polite">
+      <div id="card" class="card tier-none">
+        <div id="badge" class="badge">Ready</div>
+        <div id="number" class="number">——</div>
+        <div id="reason" class="reason">Press the button to roll your first number.</div>
+        <div id="odds" class="odds"></div>
+      </div>
+
+      <button id="roll" class="roll" type="button">Randomize</button>
+      <p id="left" class="left"></p>
+    </section>
+
+    <section>
+      <h2>Today</h2>
+      <ol id="today" class="slots"></ol>
+    </section>
+
+    <section>
+      <h2>Categories</h2>
+      <ul id="legend" class="legend"></ul>
+    </section>
+
+    <section>
+      <h2>History</h2>
+      <div id="history" class="history"></div>
+    </section>
+
+    <footer>Your rolls are saved in this browser only.</footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
