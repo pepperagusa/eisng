@@ -54,9 +54,22 @@ The 🛒 button opens a shop of 10 original cube icons (in `shop.js`), drawn as 
 | 9 | Nebula | 190,000 |
 | 10 | Prism (animated) | 230,000 |
 
+## Daily chest
+
+Once a day you can open a chest for bonus points (`chest.js`). Chest points can be spent in the shop.
+
+| Prize | Points | Chance |
+|---|---|---|
+| Small | 1,000 | 50% |
+| Nice | 2,500 | 25% |
+| Big | 5,000 | 15% |
+| Huge | 10,000 | 7% |
+| Mega | 25,000 | 2.5% |
+| Jackpot! | 50,000 | 0.5% |
+
 ## Test mode
 
-`UNLIMITED = true` at the top of `app.js` removes the 7-per-day limit for testing. Set it to `false` for launch.
+`UNLIMITED = true` at the top of `app.js` removes the 7-per-day limit and lets the chest be reopened, for testing. Set it to `false` for launch.
 
 Rolls and history are saved in the browser (localStorage). The daily limit resets at local midnight.
 

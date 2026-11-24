@@ -488,3 +488,59 @@ h1 { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .shop-btn:disabled { color: var(--muted); cursor: not-allowed; font-weight: 600; }
 .shop-btn:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
 .shop-item:not(.owned) .shop-art { filter: saturate(.85); }
+
+/* Equipped icon on the roll card */
+.card { position: relative; }
+.card-icon { position: absolute; top: 12px; right: 12px; line-height: 0; }
+.card-icon[hidden] { display: none; }
+.spinning .card-icon { visibility: visible; }
+
+/* Daily chest */
+.chest-card {
+  --c: var(--impossible);
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+.chest-art { line-height: 0; flex: none; }
+.chest-art.ready { animation: bob 2s ease-in-out infinite; }
+.chest-art.shake { animation: shake .35s linear 2; }
+@keyframes bob { 50% { transform: translateY(-4px); } }
+@keyframes shake {
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+.chest-body { flex: 1; min-width: 0; }
+.chest-title { font-weight: 800; font-size: 1.1rem; }
+.chest-text { color: var(--text); }
+.chest-card[class*="prize-"] .chest-text { font-weight: 800; font-size: 1.3rem; color: var(--c); }
+.chest-card .more { margin: 2px 0 0; }
+.prize-small { --c: var(--common); }
+.prize-nice { --c: var(--uncommon); }
+.prize-big { --c: var(--cool); }
+.prize-huge { --c: var(--insane); }
+.prize-mega { --c: var(--extreme); border-color: var(--extreme); }
+.prize-jackpot { --c: var(--impossible); border-color: var(--impossible); box-shadow: 0 0 40px -8px var(--impossible); }
+.chest-btn {
+  flex: none;
+  font: inherit;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--impossible);
+  color: #0e0f14;
+  cursor: pointer;
+}
+.chest-btn:disabled { background: var(--panel-2); color: var(--muted); cursor: not-allowed; }
+.chest-btn:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+@media (max-width: 480px) {
+  .chest-card { flex-wrap: wrap; }
+  .chest-btn { width: 100%; }
+}
+.ach[hidden] { display: none; }

@@ -1,6 +1,7 @@
 import { classify, TIERS, MIN, MAX } from "./classify.js";
 import { ACHIEVEMENTS, GROUPS, achievementsFor, score } from "./achievements.js";
 import { ICONS, iconSVG } from "./shop.js";
+import { PRIZES, pickPrize, chestSVG } from "./chest.js";
 
 // While testing: unlimited rolls. Set to false when the project is done.
 const UNLIMITED = true;
@@ -17,13 +18,15 @@ const oneIn = (count) => {
 };
 
 // ---- storage ----
-// { days: { "YYYY-MM-DD": [{ n, t, r, at }] }, shop: { owned: [id], equipped: id|null } }
-const fresh = () => ({ days: {}, shop: { owned: [], equipped: null } });
+// { days: { "YYYY-MM-DD": [{ n, t, r, at }] }, shop: { owned: [id], equipped: id|null },
+//   chests: [{ day, prize, points, at }] }
+const fresh = () => ({ days: {}, shop: { owned: [], equipped: null }, chests: [] });
 function load() {
   try {
     const data = JSON.parse(localStorage.getItem(STORE_KEY));
     if (data && typeof data.days === "object") {
       data.shop ||= { owned: [], equipped: null };
+      data.chests ||= [];
       return data;
     }
   } catch {}
@@ -75,6 +78,7 @@ function showResult(roll, animate, fresh = new Set()) {
   const card = $("card");
   const tier = TIERS[roll.t];
   card.className = `card t-${tier.id} tier-${tier.id}`;
+  card.dataset.rolled = "yes";
   $("badge").textContent = tier.name;
   $("number").textContent = fmt(roll.n);
   $("reason").textContent = roll.r;
@@ -272,7 +276,8 @@ function renderHistory() {
 }
 
 // ---- shop ----
-const earnedPoints = () => sumPoints(Object.values(state.days).flat());
+const chestPoints = () => state.chests.reduce((t, c) => t + c.points, 0);
+const earnedPoints = () => sumPoints(Object.values(state.days).flat()) + chestPoints();
 const spentPoints = () => state.shop.owned.reduce((t, id) => t + (ICONS.find((i) => i.id === id)?.price || 0), 0);
 const balance = () => earnedPoints() - spentPoints();
 
@@ -280,12 +285,67 @@ function renderAvatar() {
   const id = state.shop.equipped;
   $("avatar").innerHTML = id ? iconSVG(id, 40) : "";
   $("avatar").hidden = !id;
+  // The equipped icon also sits in the top-right corner of the roll card.
+  const showOnCard = id && $("card").dataset.rolled === "yes";
+  $("card-icon").innerHTML = showOnCard ? iconSVG(id, 44) : "";
+  $("card-icon").hidden = !showOnCard;
+}
+
+// ---- daily chest ----
+const chestOpenedToday = () => state.chests.some((c) => c.day === todayKey());
+const canOpenChest = () => UNLIMITED || !chestOpenedToday();
+let chestBusy = false;
+
+function renderChest(justOpened) {
+  const last = state.chests.at(-1);
+  const openedToday = chestOpenedToday();
+  const showOpen = justOpened || (openedToday && !UNLIMITED);
+  $("chest-art").innerHTML = chestSVG(showOpen, 96);
+  $("chest-art").classList.toggle("ready", canOpenChest() && !chestBusy);
+  const btn = $("open-chest");
+  btn.disabled = chestBusy || !canOpenChest();
+  btn.textContent = openedToday && UNLIMITED ? "Open again (test mode)" : "Open chest";
+  const prize = justOpened || (openedToday && last?.day === todayKey() ? last : null);
+  if (prize) {
+    const p = PRIZES.find((x) => x.id === prize.prize);
+    $("chest-title").textContent = `${p.name} prize!`;
+    $("chest-text").textContent = `+${fmt(prize.points)} points`;
+    $("chest-card").className = `chest-card prize-${p.id}`;
+  } else {
+    $("chest-title").textContent = "Daily chest";
+    $("chest-text").textContent = "Open it for bonus points. Up to 50,000!";
+    $("chest-card").className = "chest-card";
+  }
+  $("chest-note").textContent = canOpenChest()
+    ? (UNLIMITED ? "Test mode: the chest can be opened again." : "Ready to open!")
+    : `Next chest in ${untilMidnight()}.`;
+}
+
+function openChest() {
+  if (chestBusy || !canOpenChest()) return;
+  const p = pickPrize();
+  const entry = { day: todayKey(), prize: p.id, points: p.points, at: Date.now() };
+  state.chests.push(entry);
+  save();
+  chestBusy = true;
+  renderChest();
+  const art = $("chest-art");
+  art.classList.add("shake");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(() => {
+    art.classList.remove("shake");
+    chestBusy = false;
+    renderChest(entry);
+    $("chest-card").classList.add("reveal");
+    renderStats();
+    if ($("shop").open) renderShop();
+  }, reduced ? 0 : 700);
 }
 
 function renderShop() {
   const bal = balance();
   $("shop-balance").textContent = fmt(bal);
-  $("shop-earned").textContent = `Earned ${fmt(earnedPoints())} · spent ${fmt(spentPoints())}`;
+  $("shop-earned").textContent = `Earned ${fmt(earnedPoints())} (${fmt(chestPoints())} from chests) · spent ${fmt(spentPoints())}`;
   const box = $("shop-list");
   box.innerHTML = "";
   ICONS.forEach((icon, i) => {
@@ -338,6 +398,7 @@ function renderAll() {
   renderStats();
   renderHistory();
   renderAvatar();
+  if (!chestBusy) renderChest();
   if ($("settings").open) renderAchievements();
   if ($("shop").open) renderShop();
 }
@@ -363,6 +424,8 @@ function roll() {
   renderControls();
   const card = $("card");
   card.className = "card tier-none spinning";
+  card.dataset.rolled = "yes";
+  renderAvatar();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const start = performance.now();
 
@@ -382,7 +445,7 @@ function roll() {
 $("roll").addEventListener("click", roll);
 
 // Pick up a new day (or rolls from another tab) without a reload.
-setInterval(() => { if (!spinning) renderControls(); }, 30_000);
+setInterval(() => { if (!spinning) renderControls(); if (!chestBusy) renderChest(); }, 30_000);
 let shownDay = todayKey();
 function refresh() {
   if (spinning) return;
@@ -391,6 +454,7 @@ function refresh() {
   if (todayKey() !== shownDay) {
     shownDay = todayKey();
     $("card").className = "card tier-none";
+    delete $("card").dataset.rolled;
     $("badge").textContent = "Ready";
     $("number").textContent = "——";
     $("reason").textContent = "A new day. Seven fresh rolls.";
@@ -425,6 +489,7 @@ function showTab(tab) {
   if (tab === "achievements") { achShown = PAGE; renderAchievements(); }
 }
 $("open-settings").addEventListener("click", () => openSettings("how"));
+$("open-chest").addEventListener("click", openChest);
 $("open-shop").addEventListener("click", () => { renderShop(); $("shop").showModal(); });
 $("close-shop").addEventListener("click", () => $("shop").close());
 $("shop").addEventListener("click", (e) => { if (e.target === $("shop")) $("shop").close(); });
@@ -451,6 +516,7 @@ $("reset").addEventListener("click", () => {
   if (!confirm("Delete all your rolls, points, achievements and icons? This can't be undone.")) return;
   state = fresh();
   save();
+  delete $("card").dataset.rolled;
   rebuildEarned();
   $("card").className = "card tier-none";
   $("badge").textContent = "Ready";

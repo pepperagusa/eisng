@@ -23,6 +23,7 @@
 
     <section class="stage" aria-live="polite">
       <div id="card" class="card tier-none">
+        <div id="card-icon" class="card-icon" hidden></div>
         <div id="badge" class="badge">Ready</div>
         <div id="number" class="number">——</div>
         <div id="reason" class="reason">Press the button to roll your first number.</div>
@@ -35,6 +36,16 @@
 
       <button id="roll" class="roll" type="button">Randomize</button>
       <p id="left" class="left"></p>
+    </section>
+
+    <section id="chest-card" class="chest-card" aria-live="polite">
+      <div id="chest-art" class="chest-art"></div>
+      <div class="chest-body">
+        <div id="chest-title" class="chest-title">Daily chest</div>
+        <div id="chest-text" class="chest-text"></div>
+        <div id="chest-note" class="more"></div>
+      </div>
+      <button id="open-chest" class="chest-btn" type="button">Open chest</button>
     </section>
 
     <section class="stats">
@@ -114,6 +125,9 @@
       <p>Achievements you earn for the first time are marked <span class="new-tag">NEW</span>. Collect them all in the <strong>Achievements</strong> tab.</p>
 
       <h3>Icon Shop</h3>
+      <p>The icon you equip also shows in the top-right corner of every roll.</p>
+      <h3>Daily chest</h3>
+      <p>Open the chest once a day for bonus points: usually 1,000 to 5,000, sometimes 10,000 or 25,000, and very rarely a 50,000 jackpot. Chest points can be spent in the shop.</p>
       <p>Spend your points in the 🛒 <strong>Shop</strong> on 10 cube icons, from Sunny (10,000) up to the animated Prism (230,000). The icon you equip shows next to the title. Spending points never takes away your achievements.</p>
     </div>
 
