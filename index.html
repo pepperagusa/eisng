@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="test-banner" class="test-banner" hidden>Test mode: unlimited rolls</div>
   <main>
     <header>
       <h1>Randomize</h1>
@@ -20,20 +21,34 @@
         <div id="number" class="number">——</div>
         <div id="reason" class="reason">Press the button to roll your first number.</div>
         <div id="odds" class="odds"></div>
+        <div id="points" class="points"></div>
+        <ul id="won" class="won"></ul>
       </div>
 
       <button id="roll" class="roll" type="button">Randomize</button>
       <p id="left" class="left"></p>
     </section>
 
+    <section class="stats">
+      <div><span id="stat-total" class="stat-num">0</span><span class="stat-label">Total points</span></div>
+      <div><span id="stat-rolls" class="stat-num">0</span><span class="stat-label">Rolls</span></div>
+      <div><span id="stat-best" class="stat-num">—</span><span class="stat-label">Best roll</span></div>
+    </section>
+
     <section>
-      <h2>Today</h2>
+      <h2 id="today-title">Today</h2>
       <ol id="today" class="slots"></ol>
+      <p id="today-more" class="more"></p>
     </section>
 
     <section>
       <h2>Categories</h2>
       <ul id="legend" class="legend"></ul>
+    </section>
+
+    <section>
+      <h2 id="ach-title">Achievements</h2>
+      <ul id="ach-list" class="ach-list"></ul>
     </section>
 
     <section>

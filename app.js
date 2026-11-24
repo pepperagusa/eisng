@@ -1,5 +1,8 @@
 import { classify, TIERS, MIN, MAX } from "./classify.js";
+import { ACHIEVEMENTS, achievementsFor, score } from "./achievements.js";
 
+// While testing: unlimited rolls. Set to false when the project is done.
+const UNLIMITED = true;
 const ROLLS_PER_DAY = 7;
 const STORE_KEY = "eisng:v1";
 const SPIN_MS = 900;
@@ -35,6 +38,9 @@ function randomNumber() {
   return MIN + (buf[0] % range);
 }
 
+const pointsOf = (n) => score(achievementsFor(n));
+const sumPoints = (rolls) => rolls.reduce((t, r) => t + pointsOf(r.n), 0);
+
 let state = load();
 let spinning = false;
 
@@ -51,6 +57,19 @@ function showResult(roll, animate) {
   $("number").textContent = fmt(roll.n);
   $("reason").textContent = roll.r;
   $("odds").textContent = `${tier.name} numbers: ${oneIn(tier.count)}`;
+  const won = achievementsFor(roll.n);
+  $("points").textContent = `+${fmt(score(won))} points`;
+  const box = $("won");
+  box.innerHTML = "";
+  for (const { a, detail } of won) {
+    const li = document.createElement("li");
+    li.className = "ach " + band(a.points);
+    li.title = `${a.desc} · ${oneIn(a.count)}`;
+    li.innerHTML = `<span class="ach-name"></span><span class="ach-pts"></span>`;
+    li.firstChild.textContent = a.name + (detail ? ` (${detail})` : "");
+    li.lastChild.textContent = `+${fmt(a.points)}`;
+    box.append(li);
+  }
   if (animate) {
     card.classList.remove("reveal");
     void card.offsetWidth;
@@ -58,10 +77,16 @@ function showResult(roll, animate) {
   }
 }
 
+// Colour band for an achievement by how many points it's worth.
+const band = (p) => (p >= 1000 ? "b-legend" : p >= 250 ? "b-epic" : p >= 75 ? "b-rare" : p >= 30 ? "b-good" : "b-basic");
+
 function renderControls() {
   const left = ROLLS_PER_DAY - rollsToday().length;
-  $("roll").disabled = spinning || left <= 0;
-  if (left > 0) {
+  $("roll").disabled = spinning || (!UNLIMITED && left <= 0);
+  $("test-banner").hidden = !UNLIMITED;
+  if (UNLIMITED) {
+    $("left").textContent = `Test mode: unlimited rolls · ${rollsToday().length} rolled today`;
+  } else if (left > 0) {
     $("left").textContent = `${left} of ${ROLLS_PER_DAY} rolls left today`;
   } else {
     $("left").textContent = `All rolls used. New rolls in ${untilMidnight()}.`;
@@ -77,23 +102,30 @@ function untilMidnight() {
 }
 
 function renderToday() {
-  const rolls = rollsToday();
+  const all = rollsToday();
+  const SHOW = 21;
+  const rolls = all.slice(-SHOW);
+  const hidden = all.length - rolls.length;
+  $("today-title").textContent = `Today · ${fmt(sumPoints(all))} points`;
   $("today").innerHTML = "";
-  for (let i = 0; i < ROLLS_PER_DAY; i++) {
+  const slots = UNLIMITED ? Math.max(rolls.length, 1) : ROLLS_PER_DAY;
+  for (let i = 0; i < slots; i++) {
     const li = document.createElement("li");
     const roll = rolls[i];
     if (roll) {
       const tier = TIERS[roll.t];
       li.className = `t-${tier.id}`;
       li.title = `${tier.name}: ${roll.r}`;
-      li.innerHTML = `<span class="t"></span>${fmt(roll.n)}`;
+      li.innerHTML = `<span class="t"></span>${fmt(roll.n)}<span class="p"></span>`;
       li.firstChild.textContent = tier.name;
+      li.lastChild.textContent = `+${fmt(pointsOf(roll.n))}`;
     } else {
       li.className = "empty";
       li.textContent = i + 1;
     }
     $("today").append(li);
   }
+  $("today-more").textContent = hidden ? `Showing the last ${SHOW} of ${all.length} rolls today.` : "";
 }
 
 function renderLegend() {
@@ -112,6 +144,39 @@ function renderLegend() {
     if (!mine[i]) m.classList.add("zero");
     $("legend").append(li);
   });
+}
+
+function renderStats() {
+  const all = Object.values(state.days).flat();
+  let best = null, bestPts = -1;
+  for (const r of all) {
+    const p = pointsOf(r.n);
+    if (p > bestPts) { best = r; bestPts = p; }
+  }
+  $("stat-total").textContent = fmt(sumPoints(all));
+  $("stat-rolls").textContent = fmt(all.length);
+  $("stat-best").textContent = best ? `${fmt(best.n)} · ${fmt(bestPts)}` : "—";
+}
+
+function renderAchievements() {
+  const earned = {};
+  for (const r of Object.values(state.days).flat())
+    for (const { a } of achievementsFor(r.n)) earned[a.id] = (earned[a.id] || 0) + 1;
+  const got = ACHIEVEMENTS.filter((a) => earned[a.id]).length;
+  $("ach-title").textContent = `Achievements · ${got} of ${ACHIEVEMENTS.length} unlocked`;
+  const box = $("ach-list");
+  box.innerHTML = "";
+  for (const a of [...ACHIEVEMENTS].sort((x, y) => x.points - y.points || y.count - x.count)) {
+    const li = document.createElement("li");
+    li.className = `ach-row ${band(a.points)}${earned[a.id] ? "" : " locked"}`;
+    li.innerHTML = `<div class="ach-main"><span class="ach-name"></span><span class="ach-desc"></span></div>
+      <div class="ach-side"><span class="ach-pts"></span><span class="ach-meta"></span></div>`;
+    li.querySelector(".ach-name").textContent = a.name;
+    li.querySelector(".ach-desc").textContent = a.desc;
+    li.querySelector(".ach-pts").textContent = `${fmt(a.points)} pts`;
+    li.querySelector(".ach-meta").textContent = earned[a.id] ? `×${earned[a.id]} · ${oneIn(a.count)}` : oneIn(a.count);
+    box.append(li);
+  }
 }
 
 function renderHistory() {
@@ -133,11 +198,11 @@ function renderHistory() {
     el.querySelector(".date").textContent = new Date(day + "T12:00").toLocaleDateString(undefined, {
       weekday: "short", month: "short", day: "numeric", year: "numeric",
     });
-    el.querySelector(".best").textContent = `Best: ${bestTier.name}`;
+    el.querySelector(".best").textContent = `${fmt(sumPoints(rolls))} pts · Best: ${bestTier.name}`;
     for (const r of rolls) {
       const chip = document.createElement("span");
       chip.className = `chip t-${TIERS[r.t].id}`;
-      chip.title = `${TIERS[r.t].name}: ${r.r}`;
+      chip.title = `${TIERS[r.t].name}: ${r.r} · +${fmt(pointsOf(r.n))} pts`;
       chip.textContent = fmt(r.n);
       el.querySelector(".day-rolls").append(chip);
     }
@@ -149,12 +214,14 @@ function renderAll() {
   renderControls();
   renderToday();
   renderLegend();
+  renderStats();
+  renderAchievements();
   renderHistory();
 }
 
 // ---- rolling ----
 function roll() {
-  if (spinning || rollsToday().length >= ROLLS_PER_DAY) return;
+  if (spinning || (!UNLIMITED && rollsToday().length >= ROLLS_PER_DAY)) return;
 
   const day = todayKey();
   const n = randomNumber();
@@ -200,6 +267,8 @@ function refresh() {
     $("number").textContent = "——";
     $("reason").textContent = "A new day. Seven fresh rolls.";
     $("odds").textContent = "";
+    $("points").textContent = "";
+    $("won").innerHTML = "";
   }
   renderAll();
 }
