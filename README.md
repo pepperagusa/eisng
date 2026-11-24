@@ -37,6 +37,23 @@ Points come from how many of the 1,000,000 numbers earn the achievement: `10 × 
 
 The ⚙️ button opens Settings: how to play, an achievement browser (search, filter by family or locked/unlocked, sort), and a reset button.
 
+## Icon shop
+
+The 🛒 button opens a shop of 10 original cube icons (in `shop.js`), drawn as inline SVG. Points to spend = points earned − points spent. The equipped icon shows next to the title.
+
+| # | Icon | Price |
+|---|---|---|
+| 1 | Sunny | 10,000 |
+| 2 | Grump | 30,000 |
+| 3 | Checker | 50,000 |
+| 4 | Zap | 65,000 |
+| 5 | Visor | 95,000 |
+| 6 | Spook | 120,000 |
+| 7 | Blaze | 150,000 |
+| 8 | Monarch | 175,000 |
+| 9 | Nebula | 190,000 |
+| 10 | Prism (animated) | 230,000 |
+
 ## Test mode
 
 `UNLIMITED = true` at the top of `app.js` removes the 7-per-day limit for testing. Set it to `false` for launch.

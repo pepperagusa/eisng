@@ -1,5 +1,6 @@
 import { classify, TIERS, MIN, MAX } from "./classify.js";
 import { ACHIEVEMENTS, GROUPS, achievementsFor, score } from "./achievements.js";
+import { ICONS, iconSVG } from "./shop.js";
 
 // While testing: unlimited rolls. Set to false when the project is done.
 const UNLIMITED = true;
@@ -15,13 +16,18 @@ const oneIn = (count) => {
   return `1 in ${x < 10 ? +x.toFixed(1) : fmt(Math.round(x))}`;
 };
 
-// ---- storage: { days: { "YYYY-MM-DD": [{ n, t, r, at }] } } ----
+// ---- storage ----
+// { days: { "YYYY-MM-DD": [{ n, t, r, at }] }, shop: { owned: [id], equipped: id|null } }
+const fresh = () => ({ days: {}, shop: { owned: [], equipped: null } });
 function load() {
   try {
     const data = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (data && typeof data.days === "object") return data;
+    if (data && typeof data.days === "object") {
+      data.shop ||= { owned: [], equipped: null };
+      return data;
+    }
   } catch {}
-  return { days: {} };
+  return fresh();
 }
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {}
@@ -178,7 +184,7 @@ function renderStats() {
     const p = pointsOf(r.n);
     if (p > bestPts) { best = r; bestPts = p; }
   }
-  $("stat-total").textContent = fmt(sumPoints(all));
+  $("stat-total").textContent = fmt(balance());
   $("stat-ach").textContent = `${fmt(earned.size)} / ${fmt(ACHIEVEMENTS.length)}`;
   $("stat-best").textContent = best ? `${fmt(best.n)} · ${fmt(bestPts)}` : "—";
 }
@@ -265,13 +271,75 @@ function renderHistory() {
   }
 }
 
+// ---- shop ----
+const earnedPoints = () => sumPoints(Object.values(state.days).flat());
+const spentPoints = () => state.shop.owned.reduce((t, id) => t + (ICONS.find((i) => i.id === id)?.price || 0), 0);
+const balance = () => earnedPoints() - spentPoints();
+
+function renderAvatar() {
+  const id = state.shop.equipped;
+  $("avatar").innerHTML = id ? iconSVG(id, 40) : "";
+  $("avatar").hidden = !id;
+}
+
+function renderShop() {
+  const bal = balance();
+  $("shop-balance").textContent = fmt(bal);
+  $("shop-earned").textContent = `Earned ${fmt(earnedPoints())} · spent ${fmt(spentPoints())}`;
+  const box = $("shop-list");
+  box.innerHTML = "";
+  ICONS.forEach((icon, i) => {
+    const owned = state.shop.owned.includes(icon.id);
+    const equipped = state.shop.equipped === icon.id;
+    const li = document.createElement("li");
+    li.className = "shop-item" + (owned ? " owned" : "") + (equipped ? " equipped" : "");
+    li.innerHTML = `<div class="shop-art"></div><div class="shop-info"><span class="shop-rank"></span>
+      <span class="shop-name"></span><span class="shop-price"></span></div><button type="button" class="shop-btn"></button>`;
+    li.querySelector(".shop-art").innerHTML = iconSVG(icon.id, 64);
+    li.querySelector(".shop-rank").textContent = `#${i + 1}`;
+    li.querySelector(".shop-name").textContent = icon.name;
+    li.querySelector(".shop-price").textContent = owned ? "Owned" : `${fmt(icon.price)} pts`;
+    const btn = li.querySelector(".shop-btn");
+    if (equipped) {
+      btn.textContent = "Unequip";
+      btn.onclick = () => { state.shop.equipped = null; save(); renderShop(); renderAvatar(); };
+    } else if (owned) {
+      btn.textContent = "Equip";
+      btn.onclick = () => equip(icon.id);
+    } else if (bal >= icon.price) {
+      btn.textContent = "Buy";
+      btn.classList.add("buy");
+      btn.onclick = () => buy(icon);
+    } else {
+      btn.textContent = `Need ${fmt(icon.price - bal)}`;
+      btn.disabled = true;
+    }
+    box.append(li);
+  });
+}
+
+function buy(icon) {
+  if (balance() < icon.price || state.shop.owned.includes(icon.id)) return;
+  state.shop.owned.push(icon.id);
+  equip(icon.id);
+}
+function equip(id) {
+  state.shop.equipped = id;
+  save();
+  renderShop();
+  renderAvatar();
+  renderStats();
+}
+
 function renderAll() {
   renderControls();
   renderToday();
   renderLegend();
   renderStats();
   renderHistory();
+  renderAvatar();
   if ($("settings").open) renderAchievements();
+  if ($("shop").open) renderShop();
 }
 
 // ---- rolling ----
@@ -357,6 +425,9 @@ function showTab(tab) {
   if (tab === "achievements") { achShown = PAGE; renderAchievements(); }
 }
 $("open-settings").addEventListener("click", () => openSettings("how"));
+$("open-shop").addEventListener("click", () => { renderShop(); $("shop").showModal(); });
+$("close-shop").addEventListener("click", () => $("shop").close());
+$("shop").addEventListener("click", (e) => { if (e.target === $("shop")) $("shop").close(); });
 $("open-achievements").addEventListener("click", () => openSettings("achievements"));
 $("close-settings").addEventListener("click", () => $("settings").close());
 $("settings").addEventListener("click", (e) => { if (e.target === $("settings")) $("settings").close(); });
@@ -377,8 +448,8 @@ $("mode-note").textContent = UNLIMITED
   ? "Test mode is on: unlimited rolls."
   : `You get ${ROLLS_PER_DAY} rolls a day. They reset at midnight.`;
 $("reset").addEventListener("click", () => {
-  if (!confirm("Delete all your rolls, points and achievements? This can't be undone.")) return;
-  state = { days: {} };
+  if (!confirm("Delete all your rolls, points, achievements and icons? This can't be undone.")) return;
+  state = fresh();
   save();
   rebuildEarned();
   $("card").className = "card tier-none";

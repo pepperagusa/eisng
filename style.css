@@ -444,3 +444,47 @@ header h1 { padding: 0 48px; }
   .filters { grid-template-columns: 1fr 1fr; }
   .filters #ach-group { grid-column: 1 / -1; }
 }
+
+/* Header buttons & avatar */
+#open-shop { position: absolute; top: 0; left: 0; }
+h1 { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.avatar { display: inline-grid; line-height: 0; }
+.avatar[hidden] { display: none; }
+
+/* Shop */
+.shop-wallet { display: grid; justify-items: center; gap: 2px; margin: 12px 0 4px; }
+.shop-balance { font-size: 2rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.shop-wallet .more { margin: 0; }
+.shop-list { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 8px; }
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.shop-item.equipped { border-color: var(--impossible); }
+.shop-art { line-height: 0; flex: none; }
+.shop-info { flex: 1; display: grid; min-width: 0; }
+.shop-rank { color: var(--muted); font-size: .75rem; font-weight: 700; }
+.shop-name { font-weight: 800; font-size: 1.05rem; }
+.shop-price { color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.shop-item.owned .shop-price { color: var(--uncommon); }
+.shop-btn {
+  flex: none;
+  font: inherit;
+  font-weight: 700;
+  font-size: .9rem;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.shop-btn.buy { background: var(--uncommon); color: #0e0f14; border-color: transparent; }
+.shop-btn:disabled { color: var(--muted); cursor: not-allowed; font-weight: 600; }
+.shop-btn:focus-visible { outline: 3px solid var(--cool); outline-offset: 2px; }
+.shop-item:not(.owned) .shop-art { filter: saturate(.85); }

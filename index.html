@@ -11,10 +11,13 @@
   <div id="test-banner" class="test-banner" hidden>Test mode: unlimited rolls</div>
   <main>
     <header>
+      <button id="open-shop" class="icon-btn" type="button" aria-label="Icon shop" title="Shop">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM5.2 4l.4 2H21l-2.3 8.2A2 2 0 0 1 16.8 16H8.4a2 2 0 0 1-2-1.6L4 2H1V0h4.6l.6 4Z" transform="translate(0 1)"/></svg>
+      </button>
       <button id="open-settings" class="icon-btn" type="button" aria-label="Settings, how to play and achievements" title="Settings">
         <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.3 7.3 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .3.2.5.5.5h4c.3 0 .5-.2.5-.4l.4-2.7c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
       </button>
-      <h1>Randomize</h1>
+      <h1><span id="avatar" class="avatar" hidden></span>Randomize</h1>
       <p class="sub">Seven numbers a day from 1 to 1,000,000. How unique will yours be?</p>
     </header>
 
@@ -35,7 +38,7 @@
     </section>
 
     <section class="stats">
-      <div><span id="stat-total" class="stat-num">0</span><span class="stat-label">Total points</span></div>
+      <div><span id="stat-total" class="stat-num">0</span><span class="stat-label">Points to spend</span></div>
       <button id="open-achievements" type="button" title="Browse achievements"><span id="stat-ach" class="stat-num">0</span><span class="stat-label">Achievements ›</span></button>
       <div><span id="stat-best" class="stat-num">—</span><span class="stat-label">Best roll</span></div>
     </section>
@@ -58,6 +61,22 @@
 
     <footer>Your rolls are saved in this browser only.</footer>
   </main>
+
+  <dialog id="shop" class="settings" aria-labelledby="shop-title">
+    <div class="settings-head">
+      <h2 id="shop-title">Icon Shop</h2>
+      <button id="close-shop" class="icon-btn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="tab-body">
+      <div class="shop-wallet">
+        <span class="stat-label">Points to spend</span>
+        <span id="shop-balance" class="shop-balance">0</span>
+        <span id="shop-earned" class="more"></span>
+      </div>
+      <p class="more">Buy an icon to show it next to the title. Spending points never takes away achievements.</p>
+      <ul id="shop-list" class="shop-list"></ul>
+    </div>
+  </dialog>
 
   <dialog id="settings" class="settings" aria-labelledby="settings-title">
     <div class="settings-head">
@@ -93,6 +112,9 @@
       <p>There are over 2,000 achievements, for things like hidden codes (<em>has 583 in it</em>), years (<em>has 1999 in it</em>), digit sums, divisibility, primes, palindromes, dates and times. One roll can earn dozens at once. Bigger patterns also earn the smaller ones inside them.</p>
       <p>The rarer an achievement, the more points it's worth. Something half of all numbers have is worth 15 points. Something only one number has is worth 10,000.</p>
       <p>Achievements you earn for the first time are marked <span class="new-tag">NEW</span>. Collect them all in the <strong>Achievements</strong> tab.</p>
+
+      <h3>Icon Shop</h3>
+      <p>Spend your points in the 🛒 <strong>Shop</strong> on 10 cube icons, from Sunny (10,000) up to the animated Prism (230,000). The icon you equip shows next to the title. Spending points never takes away your achievements.</p>
     </div>
 
     <div id="tab-achievements" class="tab-body" role="tabpanel" hidden>
